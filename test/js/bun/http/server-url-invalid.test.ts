@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { tempDir, isWindows } from "harness";
+import { isWindows, tempDir } from "harness";
 import { join } from "path";
 
 test.skipIf(isWindows)("server.url percent-encodes unix socket paths with special characters", () => {
