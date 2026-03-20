@@ -907,7 +907,7 @@ bool NodeVMSpecialSandbox::getOwnPropertySlot(JSObject* cell, JSGlobalObject* gl
     if (propertyName.uid()->utf8() == "globalThis") [[unlikely]] {
         slot.disableCaching();
         slot.setThisValue(thisObject);
-        slot.setValue(thisObject, slot.attributes(), thisObject);
+        slot.setValue(thisObject, 0, thisObject);
         return true;
     }
 
@@ -933,7 +933,7 @@ bool NodeVMGlobalObject::getOwnPropertySlot(JSObject* cell, JSGlobalObject* glob
     if (notContextified && propertyName.uid()->utf8() == "globalThis") [[unlikely]] {
         slot.disableCaching();
         slot.setThisValue(thisObject);
-        slot.setValue(thisObject, slot.attributes(), thisObject->specialSandbox());
+        slot.setValue(thisObject, 0, thisObject->specialSandbox());
         return true;
     }
 
