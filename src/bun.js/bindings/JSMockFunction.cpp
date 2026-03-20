@@ -996,14 +996,17 @@ JSC_DEFINE_HOST_FUNCTION(jsMockFunctionConstruct, (JSGlobalObject * lexicalGloba
 {
     auto& vm = JSC::getVM(lexicalGlobalObject);
     auto scope = DECLARE_THROW_SCOPE(vm);
+
+    Structure* structure = InternalFunction::createSubclassStructure(lexicalGlobalObject, asObject(callframe->newTarget()), lexicalGlobalObject->objectStructureForObjectConstructor());
+    RETURN_IF_EXCEPTION(scope, {});
+    JSObject* thisObj = constructEmptyObject(vm, structure);
+    callframe->setThisValue(JSValue(thisObj));
+
     JSC::EncodedJSValue result = jsMockFunctionCall(lexicalGlobalObject, callframe);
     RETURN_IF_EXCEPTION(scope, {});
     JSValue decoded = JSValue::decode(result);
-    if (!decoded.isObject()) {
-        Structure* structure = InternalFunction::createSubclassStructure(lexicalGlobalObject, asObject(callframe->newTarget()), lexicalGlobalObject->objectStructureForObjectConstructor());
-        RETURN_IF_EXCEPTION(scope, {});
-        return JSValue::encode(constructEmptyObject(vm, structure));
-    }
+    if (!decoded.isObject())
+        return JSValue::encode(thisObj);
     return result;
 }
 
