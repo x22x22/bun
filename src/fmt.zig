@@ -488,13 +488,45 @@ pub const URLFormatter = struct {
         abstract,
     };
 
+    // Percent-encode set for file-like paths. Matches WTF's filePathEscapeTable
+    // so that unix socket paths with spaces, brackets, etc. round-trip through
+    // the URL parser without truncation or parse errors.
+    fn needsPathEscape(c: u8) bool {
+        return switch (c) {
+            0x00...0x1F, ' ', '"', '#', '%', '?', '[', '\\', ']', '^', '|', '~' => true,
+            else => c >= 0x80,
+        };
+    }
+
+    fn writePathEscaped(writer: *std.Io.Writer, path: []const u8) !void {
+        var remaining = path;
+        while (remaining.len > 0) {
+            var safe_len: usize = 0;
+            while (safe_len < remaining.len and !needsPathEscape(remaining[safe_len])) {
+                safe_len += 1;
+            }
+            try writer.writeAll(remaining[0..safe_len]);
+            remaining = remaining[safe_len..];
+            if (remaining.len == 0) break;
+            const c = remaining[0];
+            try writer.print("%{X:0>2}", .{c});
+            remaining = remaining[1..];
+        }
+    }
+
     pub fn format(this: URLFormatter, writer: *std.Io.Writer) !void {
-        try writer.print("{s}://", .{switch (this.proto) {
-            .http => "http",
-            .https => "https",
-            .unix => "unix",
-            .abstract => "abstract",
-        }});
+        switch (this.proto) {
+            .unix, .abstract => {
+                try writer.writeAll(if (this.proto == .unix) "unix://" else "abstract://");
+                if (this.hostname) |path| {
+                    try writePathEscaped(writer, path);
+                }
+                return;
+            },
+            .http, .https => {},
+        }
+
+        try writer.print("{s}://", .{if (this.proto == .https) "https" else "http"});
 
         if (this.hostname) |hostname| {
             const needs_brackets = hostname[0] != '[' and strings.isIPV6Address(hostname);
@@ -505,10 +537,6 @@ pub const URLFormatter = struct {
             }
         } else {
             try writer.writeAll("localhost");
-        }
-
-        if (this.proto == .unix) {
-            return;
         }
 
         const is_port_optional = this.port == null or (this.proto == .https and this.port == 443) or
