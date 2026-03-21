@@ -436,7 +436,8 @@ pub const CronRegisterJob = struct {
         };
         defer bun.default_allocator.free(uid_str);
         var argv = [_:null]?[*:0]const u8{ "/bin/launchctl", "bootstrap", uid_str.ptr, plist_path.ptr, null };
-        this.tmp_path = null; // don't delete the installed plist
+        this.tmp_path = null; // don't delete the installed plist; free the path string only
+        defer bun.default_allocator.free(plist_path);
         this.spawnCmd(&argv, .ignore, .ignore);
     }
 
