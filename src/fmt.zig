@@ -521,6 +521,9 @@ pub const URLFormatter = struct {
                 if (this.hostname) |path| {
                     try writePathEscaped(writer, path);
                 }
+                if (this.proto == .abstract) {
+                    try writer.writeAll("/");
+                }
                 return;
             },
             .http, .https => {},
