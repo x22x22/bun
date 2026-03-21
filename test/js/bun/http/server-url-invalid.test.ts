@@ -1,4 +1,4 @@
-import { expect, test, describe } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 describe("server.url does not crash when unix socket path produces invalid URL", () => {
   test("with object", () => {
