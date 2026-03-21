@@ -1694,11 +1694,13 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         // retrieve the user-provided matcher implementation function (the function passed to expect.extend({ ... }))
         const matcher_fn: JSValue = js.matcherFnGetCached(thisValue) orelse {
             globalThis.throw("Internal consistency error: the ExpectCustomAsymmetricMatcher(matcherFn) was garbage collected but it should not have been!", .{}) catch {};
+            globalThis.clearException();
             return false;
         };
         matcher_fn.ensureStillAlive();
         if (!matcher_fn.jsType().isFunction()) {
             globalThis.throw("Internal consistency error: the ExpectCustomMatcher(matcherFn) is not a function!", .{}) catch {};
+            globalThis.clearException();
             return false;
         }
 
@@ -1712,6 +1714,7 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         // if null, it means the function has not yet been called to capture the args, which is a misuse of the matcher
         const captured_args: JSValue = js.capturedArgsGetCached(thisValue) orelse {
             globalThis.throw("expect.{f} misused, it needs to be instantiated by calling it with 0 or more arguments", .{matcher_name}) catch {};
+            globalThis.clearException();
             return false;
         };
         captured_args.ensureStillAlive();
