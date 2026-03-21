@@ -1,4 +1,4 @@
-import { expect, test, describe } from "bun:test";
+import { describe, expect, test } from "bun:test";
 
 describe("expect.extend", () => {
   test("custom matcher returning undefined throws InvalidMatcherError", () => {
