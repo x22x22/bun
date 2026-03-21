@@ -1704,6 +1704,7 @@ pub const ExpectCustomAsymmetricMatcher = struct {
 
         // retrieve the matcher name
         const matcher_name = matcher_fn.getName(globalThis) catch {
+            globalThis.clearException();
             return false;
         };
 
@@ -1716,7 +1717,10 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         captured_args.ensureStillAlive();
 
         // prepare the args array as `[received, ...captured_args]`
-        const args_count = captured_args.getLength(globalThis) catch return false;
+        const args_count = captured_args.getLength(globalThis) catch {
+            globalThis.clearException();
+            return false;
+        };
         var allocator = std.heap.stackFallback(8 * @sizeOf(JSValue), globalThis.allocator());
         var matcher_args = std.array_list.Managed(JSValue).initCapacity(allocator.get(), args_count + 1) catch {
             globalThis.throwOutOfMemory() catch {};
@@ -1724,10 +1728,16 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         };
         matcher_args.appendAssumeCapacity(received);
         for (0..args_count) |i| {
-            matcher_args.appendAssumeCapacity(captured_args.getIndex(globalThis, @truncate(i)) catch return false);
+            matcher_args.appendAssumeCapacity(captured_args.getIndex(globalThis, @truncate(i)) catch {
+                globalThis.clearException();
+                return false;
+            });
         }
 
-        return Expect.executeCustomMatcher(globalThis, matcher_name, matcher_fn, matcher_args.items, this.flags, true) catch false;
+        return Expect.executeCustomMatcher(globalThis, matcher_name, matcher_fn, matcher_args.items, this.flags, true) catch {
+            globalThis.clearException();
+            return false;
+        };
     }
 
     pub fn asymmetricMatch(this: *ExpectCustomAsymmetricMatcher, globalThis: *JSGlobalObject, callframe: *CallFrame) bun.JSError!JSValue {
