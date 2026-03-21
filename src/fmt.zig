@@ -488,21 +488,24 @@ pub const URLFormatter = struct {
         abstract,
     };
 
-    // Percent-encode set for file-like paths (space, #, ?, [, ], etc.) so
-    // unix socket paths round-trip through the URL parser without truncation
-    // or parse errors.
-    fn needsPathEscape(c: u8) bool {
+    // Percent-encode bytes that are unsafe in a URL path component.
+    // Matches WTF's filePathEscapeTable so that unix socket paths with
+    // spaces, brackets, etc. round-trip through the URL parser.
+    fn needsEscape(c: u8, authority: bool) bool {
         return switch (c) {
-            0x00...0x1F, ' ', '"', '#', '%', '?', '[', '\\', ']', '^', '|', '~', 0x7F => true,
-            else => c >= 0x80,
+            0x00...0x1F, ' ', '"', '#', '%', '?', '[', '\\', ']', '^', '|', '~' => true,
+            // In the authority position (abstract sockets), @/:/ are
+            // structural delimiters that must also be percent-encoded.
+            '/', '@', ':' => authority,
+            else => c >= 0x7F,
         };
     }
 
-    fn writePathEscaped(writer: *std.Io.Writer, path: []const u8) !void {
+    fn writeEscaped(writer: *std.Io.Writer, path: []const u8, authority: bool) !void {
         var remaining = path;
         while (remaining.len > 0) {
             var safe_len: usize = 0;
-            while (safe_len < remaining.len and !needsPathEscape(remaining[safe_len])) {
+            while (safe_len < remaining.len and !needsEscape(remaining[safe_len], authority)) {
                 safe_len += 1;
             }
             try writer.writeAll(remaining[0..safe_len]);
@@ -517,11 +520,15 @@ pub const URLFormatter = struct {
     pub fn format(this: URLFormatter, writer: *std.Io.Writer) !void {
         switch (this.proto) {
             .unix, .abstract => {
-                try writer.writeAll(if (this.proto == .unix) "unix://" else "abstract://");
+                const is_abstract = this.proto == .abstract;
+                try writer.writeAll(if (is_abstract) "abstract://" else "unix://");
                 if (this.hostname) |path| {
-                    try writePathEscaped(writer, path);
+                    // Abstract socket names sit in the URL authority, so
+                    // @, :, / must be escaped. Unix paths sit in the URL
+                    // path where / is a legitimate separator.
+                    try writeEscaped(writer, path, is_abstract);
                 }
-                if (this.proto == .abstract) {
+                if (is_abstract) {
                     try writer.writeAll("/");
                 }
                 return;
