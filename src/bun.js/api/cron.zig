@@ -309,7 +309,7 @@ pub const CronRegisterJob = struct {
         };
         defer bun.default_allocator.free(log_dir);
         bun.FD.cwd().makePath(u8, log_dir) catch {
-            this.setErr("Failed to create ~/Library/Logs/bun/cron directory", .{});
+            this.setErr("Failed to create {s} directory", .{log_dir});
             this.finish();
             return;
         };
