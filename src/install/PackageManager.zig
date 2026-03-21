@@ -731,6 +731,7 @@ pub fn init(
                             &json_source,
                             prop.loc,
                             null,
+                            false,
                         ) catch break;
 
                         for (workspace_names.keys(), workspace_names.values()) |path, entry| {
