@@ -1727,6 +1727,7 @@ pub const ExpectCustomAsymmetricMatcher = struct {
         var allocator = std.heap.stackFallback(8 * @sizeOf(JSValue), globalThis.allocator());
         var matcher_args = std.array_list.Managed(JSValue).initCapacity(allocator.get(), args_count + 1) catch {
             globalThis.throwOutOfMemory() catch {};
+            globalThis.clearException();
             return false;
         };
         matcher_args.appendAssumeCapacity(received);
