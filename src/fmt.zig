@@ -488,12 +488,12 @@ pub const URLFormatter = struct {
         abstract,
     };
 
-    // Percent-encode set for file-like paths. Matches WTF's filePathEscapeTable
-    // so that unix socket paths with spaces, brackets, etc. round-trip through
-    // the URL parser without truncation or parse errors.
+    // Percent-encode set for file-like paths (space, #, ?, [, ], etc.) so
+    // unix socket paths round-trip through the URL parser without truncation
+    // or parse errors.
     fn needsPathEscape(c: u8) bool {
         return switch (c) {
-            0x00...0x1F, ' ', '"', '#', '%', '?', '[', '\\', ']', '^', '|', '~' => true,
+            0x00...0x1F, ' ', '"', '#', '%', '?', '[', '\\', ']', '^', '|', '~', 0x7F => true,
             else => c >= 0x80,
         };
     }
