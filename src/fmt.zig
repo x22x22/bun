@@ -493,7 +493,7 @@ pub const URLFormatter = struct {
     // spaces, brackets, etc. round-trip through the URL parser.
     fn needsEscape(c: u8, authority: bool) bool {
         return switch (c) {
-            0x00...0x1F, ' ', '"', '#', '%', '?', '[', '\\', ']', '^', '|', '~' => true,
+            0x00...0x1F, ' ', '"', '#', '%', '<', '>', '?', '[', '\\', ']', '^', '|', '~' => true,
             // In the authority position (abstract sockets), @/:/ are
             // structural delimiters that must also be percent-encoded.
             '/', '@', ':' => authority,
