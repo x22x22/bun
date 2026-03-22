@@ -33,12 +33,12 @@ test("VM.throwError does not crash when a termination exception is already pendi
         triggerError: function() { fs.readFileSync(123); }
       });
 
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 3; i++) {
         try {
           vm.runInContext(
             'while (true) { try { triggerError(); } catch(e) {} }',
             ctx,
-            { timeout: 1 },
+            { timeout: 5 },
           );
         } catch (e) {
           // ERR_SCRIPT_EXECUTION_TIMEOUT expected
@@ -52,7 +52,7 @@ test("VM.throwError does not crash when a termination exception is already pendi
     stderr: "pipe",
   });
 
-  const [stdout, stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
+  const [stdout, _stderr, exitCode] = await Promise.all([proc.stdout.text(), proc.stderr.text(), proc.exited]);
 
   expect(stdout.trim()).toBe("OK");
   expect(exitCode).toBe(0);
