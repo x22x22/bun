@@ -180,6 +180,7 @@ pub fn toBufferedValue(this: *ByteBlobLoader, globalThis: *JSGlobalObject, actio
         return blob.toPromise(globalThis, action);
     }
 
+    this.parent().is_closed = true;
     var empty: Blob.Any = .{ .Blob = Blob.initEmpty(globalThis) };
     return empty.toPromise(globalThis, action);
 }
