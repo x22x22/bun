@@ -1,4 +1,4 @@
-import { test, expect } from "bun:test";
+import { expect, test } from "bun:test";
 
 // Regression test: calling buffered consumption methods on a ReadableStream
 // backed by a Blob after the blob store has already been consumed should
