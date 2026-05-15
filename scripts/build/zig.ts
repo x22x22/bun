@@ -197,22 +197,12 @@ export function registerZigRules(n: Ninja, cfg: Config): void {
   // own build system handles per-file tracking; restat prunes downstream
   // when zig's cache says nothing changed.
   //
-  // Default: --console + pool=console. Zig gets direct TTY, its native
-  // spinner works. Ninja defers [N/M] while the console job owns the
-  // terminal, so cxx progress is hidden during zig's compile. Matches
-  // the old cmake build's behavior.
-  //
-  // --zig-progress instead of --console (posix only, set interleave=true):
-  // decodes ZIG_PROGRESS IPC into `[zig] Stage [N/M]` lines that interleave
-  // with ninja's [N/M] for cxx — both visible at once. Requires
-  // oven-sh/zig's fix for ziglang/zig#24722. Windows zig has no IPC in
-  // our fork (upstream added Feb 2026, not backported).
-  const interleave = false;
-  const consoleMode = !interleave || hostWin;
+  // Default to plain prefix mode for Zig. `--console` and `--zig-progress`
+  // both depend on Zig's auxiliary progress channel, while plain mode keeps
+  // the invocation simple and has proven more reliable in local builds.
   n.rule("zig_build", {
-    command: `${stream} ${consoleMode ? "--console" : "--zig-progress"} --env=ZIG_LOCAL_CACHE_DIR=$zig_local_cache --env=ZIG_GLOBAL_CACHE_DIR=$zig_global_cache $zig build $step $args`,
+    command: `${stream} --env=ZIG_LOCAL_CACHE_DIR=$zig_local_cache --env=ZIG_GLOBAL_CACHE_DIR=$zig_global_cache $zig build $step $args`,
     description: "zig $step → $out",
-    ...(consoleMode && { pool: "console" }),
     restat: true,
   });
 }
